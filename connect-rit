@@ -1,0 +1,35 @@
+#!/bin/bash
+read -p "RIT Username: " RIT_USERNAME
+read -s -p "RIT Password: " RIT_PASSWORD
+echo
+
+echo "Creating Tmp fs for config file"
+sudo mkdir /mnt/tmpfs
+sudo mount -osize=1k tmpfs /mnt/tmpfs -t tmpfs
+
+echo "Stoping services"
+sudo service NetworkManager stop 
+sudo service network stop
+
+echo "Configuring wpa supplicant"
+sudo echo "ctrl_interface_group=0
+ctrl_interface=/var/run/wpa_supplicant
+eapol_version=1
+ap_scan=1
+fast_reauth=1
+network={ 
+    ssid=\"ritwpa2\" 
+    key_mgmt=WPA-EAP
+    auth_alg=OPEN 
+    eap=PEAP
+    identity=\"$RIT_USERNAME\"
+    password=\"$RIT_PASSWORD\"
+}" > /mnt/tmpfs/.cfg
+sudo /usr/sbin/wpa_supplicant -ddd -B -ieth0 -c/mnt/tmpfs/.cfg -Dwext
+
+echo "Starting services and bringing up device"
+sudo service network start
+sudo ifup eth0
+sudo service NetworkManager start
+
+echo "Ready to connect to ritwpa2"
