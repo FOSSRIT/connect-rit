@@ -39,4 +39,12 @@ auth-alg=open
 
 EOF
 
-systemctl restart NetworkManager.service
+chmod 600 /etc/NetworkManager/system-connections/ritwpa2
+
+systemctl stop NetworkManager.service
+killall wpa_supplicant
+pidof dhclient > /dev/null && dhclient -r $IFACE
+while ( pidof NetworkManager || pidof wpa_suppliant ) > /dev/null ; do
+	sleep 0.2
+done
+systemctl start NetworkManager.service
