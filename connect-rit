@@ -48,3 +48,6 @@ while ( pidof NetworkManager || pidof wpa_suppliant ) > /dev/null ; do
 	sleep 0.2
 done
 systemctl start NetworkManager.service
+
+echo "You should be online momentarily, please stand by and watch the"
+echo "NM icon in the systray."
