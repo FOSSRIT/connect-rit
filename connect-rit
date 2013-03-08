@@ -1,35 +1,42 @@
 #!/bin/bash
-read -p "RIT Username: " RIT_USERNAME
-read -s -p "RIT Password: " RIT_PASSWORD
-echo
 
-echo "Creating Tmp fs for config file"
-sudo mkdir /mnt/tmpfs
-sudo mount -osize=1k tmpfs /mnt/tmpfs -t tmpfs
+set -e
+[ "$EUID" -gt 0 ] && exec sudo $0 $@
 
-echo "Stoping services"
-sudo service NetworkManager stop 
-sudo service network stop
 
-echo "Configuring wpa supplicant"
-sudo echo "ctrl_interface_group=0
-ctrl_interface=/var/run/wpa_supplicant
-eapol_version=1
-ap_scan=1
-fast_reauth=1
-network={ 
-    ssid=\"ritwpa2\" 
-    key_mgmt=WPA-EAP
-    auth_alg=OPEN 
-    eap=PEAP
-    identity=\"$RIT_USERNAME\"
-    password=\"$RIT_PASSWORD\"
-}" > /mnt/tmpfs/.cfg
-sudo /usr/sbin/wpa_supplicant -ddd -B -ieth0 -c/mnt/tmpfs/.cfg -Dwext
+read -p "RIT username: " USER
+read -s -p "RIT password: " PASSWORD
+IFACE=`ip link | grep -- '^2:' | awk '{print $2;}' | cut -d: -f1`
+MAC=`ip link show $IFACE | grep link/ether | awk '{print $2;}'`
 
-echo "Starting services and bringing up device"
-sudo service network start
-sudo ifup eth0
-sudo service NetworkManager start
+cat <<EOF > /etc/NetworkManager/system-connections/ritwpa2
+[ipv6]
+method=auto
 
-echo "Ready to connect to ritwpa2"
+[connection]
+id=ritwpa2
+uuid=cc3b4d5f-2b7a-40bf-9c5b-ced3cadb22fa
+type=802-11-wireless
+
+[802-11-wireless]
+ssid=ritwpa2
+mode=infrastructure
+mac-address=$MAC
+security=802-11-wireless-security
+
+[802-1x]
+eap=peap;
+identity=$USER
+phase2-auth=mschapv2
+password=$PASSWORD
+
+[ipv4]
+method=auto
+
+[802-11-wireless-security]
+key-mgmt=wpa-eap
+auth-alg=open
+
+EOF
+
+systemctl restart NetworkManager.service
