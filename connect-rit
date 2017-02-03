@@ -18,7 +18,7 @@ eapol_version=1
 ap_scan=1
 fast_reauth=1
 network={ 
-    ssid=\"ritwpa2\" 
+    ssid=\"RIT\" 
     key_mgmt=WPA-EAP
     auth_alg=OPEN 
     eap=PEAP
@@ -32,4 +32,4 @@ sudo service network start
 sudo ifup eth0
 sudo service NetworkManager start
 
-echo "Ready to connect to ritwpa2"
+echo "Ready to connect to RIT"
